@@ -22,26 +22,26 @@ export default function ReportPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10 print:max-w-none">
-      <div className="mb-6 flex gap-3 print:hidden">
-        <Link href="/workspace" className="text-blue-400 hover:underline">
-          ← Workspace
+      <div className="mb-6 flex items-center gap-3 print:hidden">
+        <Link href="/workspace" className="text-xs font-medium text-[var(--foreground)] underline hover:opacity-80">
+          ← Return to Workspace
         </Link>
         <button
           type="button"
-          className="rounded border border-slate-600 px-3 py-1 text-sm"
+          className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs"
           onClick={() => window.print()}
         >
           Print / PDF
         </button>
         <button
           type="button"
-          className="rounded border border-slate-600 px-3 py-1 text-sm"
+          className="rounded-lg border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] px-3 py-1.5 text-xs font-medium hover:opacity-90 transition shadow-2xs"
           onClick={download}
         >
           Download .md
         </button>
       </div>
-      <article className="prose prose-invert max-w-none whitespace-pre-wrap font-sans text-sm leading-relaxed">
+      <article className="rounded-xl border border-[var(--border)] bg-white p-8 text-xs font-mono leading-relaxed text-[var(--foreground)] whitespace-pre-wrap shadow-xs">
         {md}
       </article>
     </main>

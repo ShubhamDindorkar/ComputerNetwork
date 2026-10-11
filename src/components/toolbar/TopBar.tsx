@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Terminal } from "lucide-react";
 import { useTopologyStore } from "@/store/topologyStore";
 import {
   fetchPreset,
@@ -9,6 +11,7 @@ import {
   validateTopology,
 } from "@/lib/apiClient";
 import { blankTopology } from "@/engine/presets/blank";
+import { PingCommandsDialog } from "./PingCommandsDialog";
 
 export function TopBar() {
   const router = useRouter();
@@ -19,6 +22,7 @@ export function TopBar() {
   const setMode = useTopologyStore((s) => s.setMode);
   const setLastValidation = useTopologyStore((s) => s.setLastValidation);
   const setBottomTab = useTopologyStore((s) => s.setBottomTab);
+  const [showPingDialog, setShowPingDialog] = useState(false);
 
   const saveAs = () => {
     const blob = new Blob([JSON.stringify(topology, null, 2)], {
@@ -67,85 +71,114 @@ export function TopBar() {
   };
 
   return (
-    <header className="flex items-center gap-2 border-b border-slate-700 bg-[var(--panel)] px-3 py-2 text-sm">
-      <Link href="/" className="font-semibold text-blue-400 hover:underline">
-        Campus QoS
-      </Link>
-      <span className="text-slate-500">|</span>
-      <input
-        className="max-w-[220px] rounded border border-slate-600 bg-slate-900 px-2 py-1"
-        value={topology.name}
-        onChange={(e) =>
-          setTopology({ ...topology, name: e.target.value })
-        }
-      />
-      <button
-        type="button"
-        className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
-        onClick={() => loadTopology(blankTopology())}
-      >
-        New
-      </button>
-      <select
-        className="rounded border border-slate-600 bg-slate-900 px-2 py-1"
-        defaultValue=""
-        onChange={(e) => {
-          if (e.target.value) void loadPreset(e.target.value);
-          e.target.value = "";
-        }}
-      >
-        <option value="" disabled>
-          Load preset
-        </option>
-        <option value="blank">Blank</option>
-        <option value="campus-cabled">Cabled only</option>
-        <option value="campus-qos">Full QoS project</option>
-      </select>
-      <button
-        type="button"
-        className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
-        onClick={saveAs}
-      >
-        Save As JSON
-      </button>
-      <button
-        type="button"
-        className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
-        onClick={importJson}
-      >
-        Import
-      </button>
-      <div className="ml-auto flex items-center gap-2">
-        <span className="text-slate-400">Mode</span>
+    <>
+      <header className="flex flex-wrap items-center gap-2 border-b border-[var(--border)] bg-[var(--panel)] px-4 py-2 text-sm select-none">
+        <Link href="/" className="font-semibold text-[var(--foreground)] tracking-tight hover:opacity-80">
+          Campus QoS
+        </Link>
+        <Link
+          href="/overview"
+          className="rounded-md border border-[var(--border)] bg-[var(--subtle)] px-2 py-0.5 text-xs text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white transition"
+        >
+          Overview
+        </Link>
+        <span className="text-[var(--border)]">|</span>
+        <input
+          className="max-w-[220px] rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs font-medium text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs"
+          value={topology.name}
+          onChange={(e) =>
+            setTopology({ ...topology, name: e.target.value })
+          }
+        />
         <button
           type="button"
-          className={`rounded px-2 py-1 ${mode === "realtime" ? "bg-blue-600" : "border border-slate-600"}`}
-          onClick={() => setMode("realtime")}
+          className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs"
+          onClick={() => loadTopology(blankTopology())}
         >
-          Realtime
+          New
+        </button>
+        <select
+          className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs"
+          defaultValue=""
+          onChange={(e) => {
+            if (e.target.value) void loadPreset(e.target.value);
+            e.target.value = "";
+          }}
+        >
+          <option value="" disabled>
+            Load preset
+          </option>
+          <option value="blank">Blank</option>
+          <option value="campus-cabled">Cabled only</option>
+          <option value="campus-qos">Full QoS project</option>
+        </select>
+        <button
+          type="button"
+          className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs"
+          onClick={saveAs}
+        >
+          Save JSON
         </button>
         <button
           type="button"
-          className={`rounded px-2 py-1 ${mode === "simulation" ? "bg-blue-600" : "border border-slate-600"}`}
-          onClick={() => setMode("simulation")}
+          className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs"
+          onClick={importJson}
         >
-          Simulation
+          Import
         </button>
         <button
           type="button"
-          className="rounded bg-emerald-700 px-2 py-1 hover:bg-emerald-600"
-          onClick={() => void onValidate()}
+          className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs flex items-center gap-1.5"
+          onClick={() => setShowPingDialog(true)}
         >
-          Validate
+          <Terminal className="h-3.5 w-3.5" />
+          Show ping commands
         </button>
-        <button
-          type="button"
-          className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-800"
-          onClick={() => void onReport()}
-        >
-          Report
-        </button>
-      </div>
-    </header>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-[var(--muted)] font-mono">Mode</span>
+          <button
+            type="button"
+            className={`rounded-lg px-2.5 py-1 text-xs transition shadow-2xs ${
+              mode === "realtime"
+                ? "border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] font-medium"
+                : "border border-[var(--border)] bg-white text-[var(--foreground)] hover:bg-[var(--subtle)]"
+            }`}
+            onClick={() => setMode("realtime")}
+          >
+            Realtime
+          </button>
+          <button
+            type="button"
+            className={`rounded-lg px-2.5 py-1 text-xs transition shadow-2xs ${
+              mode === "simulation"
+                ? "border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] font-medium"
+                : "border border-[var(--border)] bg-white text-[var(--foreground)] hover:bg-[var(--subtle)]"
+            }`}
+            onClick={() => {
+              setMode("simulation");
+              setBottomTab("simulation");
+            }}
+          >
+            Simulation
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] px-3 py-1 text-xs font-medium hover:opacity-90 transition shadow-2xs"
+            onClick={() => void onValidate()}
+          >
+            Validate
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs"
+            onClick={() => void onReport()}
+          >
+            Report
+          </button>
+        </div>
+      </header>
+
+      <PingCommandsDialog open={showPingDialog} onClose={() => setShowPingDialog(false)} />
+    </>
   );
 }

@@ -1,19 +1,51 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "AnthropicSerif";
+  src: url("/fonts/AnthropicSerif-Text-Regular-Static.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --background: #0f1419;
-  --foreground: #e7ecf3;
-  --panel: #1a2332;
-  --border: #2d3a4f;
-  --accent: #3b82f6;
-  --success: #22c55e;
-  --warn: #f59e0b;
+  --background: #f8f7f4;
+  --foreground: #1a1a18;
+  --panel: #ffffff;
+  --border: #e2dfd8;
+  --accent: #1a56db;
+  --success: #166534;
+  --warn: #92400e;
+  --muted: #6b7280;
+  --subtle: #f1f0ec;
+  --serif: "AnthropicSerif", Georgia, "Times New Roman", serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.65;
+}
+
+/* Monospace stays system mono */
+code,
+pre,
+.font-mono {
+  font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", Menlo, Monaco, Consolas,
+    monospace !important;
 }
 
 @media print {

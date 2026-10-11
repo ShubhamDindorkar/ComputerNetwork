@@ -127,11 +127,17 @@ function CanvasInner() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       fitView
-      className="bg-slate-950"
+      className="bg-[var(--background)]"
     >
-      <Background gap={16} color="#334155" />
-      <MiniMap pannable zoomable />
-      <Controls />
+      <Background gap={18} color="#d4d1c9" />
+      <MiniMap
+        pannable
+        zoomable
+        className="!border !border-[var(--border)] !bg-[var(--panel)] !rounded-lg !shadow-xs"
+        nodeColor="#1a1a18"
+        maskColor="rgba(248, 247, 244, 0.75)"
+      />
+      <Controls className="!border !border-[var(--border)] !bg-[var(--panel)] !rounded-lg !shadow-xs [&>button]:!border-b [&>button]:!border-[var(--border)] [&>button]:!bg-[var(--panel)] [&>button]:!fill-[var(--foreground)]" />
     </ReactFlow>
   );
 }

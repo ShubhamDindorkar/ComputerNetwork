@@ -26,37 +26,43 @@ export function DevicePalette() {
   };
 
   return (
-    <aside className="flex w-48 flex-col gap-2 border-r border-slate-700 bg-[var(--panel)] p-3 text-sm">
-      <p className="text-xs font-semibold uppercase text-slate-400">Devices</p>
-      {ITEMS.map((item) => (
-        <div
-          key={item.model}
-          draggable
-          onDragStart={(e) => onDragStart(e, item.model)}
-          className="flex cursor-grab items-center gap-2 rounded border border-slate-600 bg-slate-900 px-2 py-2 hover:border-blue-500"
-        >
-          {item.icon}
-          <span>{item.label}</span>
-        </div>
-      ))}
-      <p className="mt-4 text-xs font-semibold uppercase text-slate-400">
+    <aside className="flex w-52 flex-col gap-2.5 border-r border-[var(--border)] bg-[var(--panel)] p-3.5 text-sm select-none">
+      <p className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--muted)]">
+        Devices
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {ITEMS.map((item) => (
+          <div
+            key={item.model}
+            draggable
+            onDragStart={(e) => onDragStart(e, item.model)}
+            className="flex cursor-grab items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--subtle)] px-3 py-2 text-xs font-medium text-[var(--foreground)] transition hover:border-[var(--foreground)] hover:bg-white active:cursor-grabbing shadow-2xs"
+          >
+            <span className="text-[var(--foreground)] opacity-80">{item.icon}</span>
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--muted)]">
         Connections
       </p>
       <button
         type="button"
         onClick={() => setToolMode(toolMode === "cable" ? "select" : "cable")}
-        className={`flex items-center gap-2 rounded border px-2 py-2 ${
+        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition shadow-2xs ${
           toolMode === "cable"
-            ? "border-amber-500 bg-amber-950"
-            : "border-slate-600 bg-slate-900"
+            ? "border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] font-medium"
+            : "border-[var(--border)] bg-[var(--subtle)] text-[var(--foreground)] hover:bg-white hover:border-[var(--foreground)]"
         }`}
       >
         <Cable className="h-4 w-4" />
         Copper Straight
       </button>
-      <p className="mt-auto text-xs text-slate-500">
-        Drag devices onto canvas. Double-click to configure. Del to remove.
-      </p>
+
+      <div className="mt-auto rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-2.5 text-[11px] text-[var(--muted)] leading-relaxed">
+        Drag devices onto canvas. Double-click to inspect. Del to remove.
+      </div>
     </aside>
   );
 }

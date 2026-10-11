@@ -12,7 +12,7 @@ export function httpGet(
   topology: Topology,
   pcDeviceId: string,
   url: string,
-): { ok: boolean; html?: string; error?: string; resolvedIp?: string } {
+): { ok: boolean; html?: string; error?: string; resolvedIp?: string; trace?: import("./types").ForwardResult } {
   let host = url.trim();
   if (host.startsWith("http://")) host = host.slice(7);
   if (host.startsWith("https://")) host = host.slice(8);
@@ -32,7 +32,7 @@ export function httpGet(
 
   const reach = forwardIcmp(topology, pcDeviceId, targetIp);
   if (!reach.success) {
-    return { ok: false, error: "Request Timeout", resolvedIp: targetIp };
+    return { ok: false, error: "Request Timeout", resolvedIp: targetIp, trace: reach };
   }
 
   const webServer = topology.devices.find(
@@ -43,12 +43,13 @@ export function httpGet(
   );
 
   if (!webServer?.server) {
-    return { ok: false, error: "Request Timeout", resolvedIp: targetIp };
+    return { ok: false, error: "Request Timeout", resolvedIp: targetIp, trace: reach };
   }
 
   return {
     ok: true,
     html: webServer.server.services.http.indexHtml,
     resolvedIp: targetIp,
+    trace: reach,
   };
 }

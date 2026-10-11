@@ -14,126 +14,215 @@ export function ServerInspector({ device }: { device: Device }) {
   return (
     <div className="space-y-4">
       <section>
-        <h4 className="font-semibold text-slate-300">GigabitEthernet0</h4>
-        <input
-          className="mt-1 w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs"
-          placeholder="IP"
-          value={server.interface.ip ?? ""}
-          onChange={(e) =>
-            patch({ interface: { ...server.interface, ip: e.target.value } })
-          }
-        />
-        <input
-          className="mt-1 w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs"
-          placeholder="Subnet mask"
-          value={server.interface.subnetMask ?? ""}
-          onChange={(e) =>
-            patch({
-              interface: { ...server.interface, subnetMask: e.target.value },
-            })
-          }
-        />
-        <input
-          className="mt-1 w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs"
-          placeholder="Default gateway"
-          value={server.interface.defaultGateway ?? ""}
-          onChange={(e) =>
-            patch({
-              interface: {
-                ...server.interface,
-                defaultGateway: e.target.value,
-              },
-            })
-          }
-        />
-      </section>
-
-      <section>
-        <h4 className="font-semibold text-slate-300">Services → DHCP</h4>
-        <label className="flex items-center gap-2 text-xs">
+        <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          GigabitEthernet0 Interface
+        </h4>
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 space-y-2 shadow-2xs">
           <input
-            type="checkbox"
-            checked={server.services.dhcp.enabled}
+            className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+            placeholder="IP Address"
+            value={server.interface.ip ?? ""}
+            onChange={(e) =>
+              patch({ interface: { ...server.interface, ip: e.target.value } })
+            }
+          />
+          <input
+            className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+            placeholder="Subnet mask"
+            value={server.interface.subnetMask ?? ""}
             onChange={(e) =>
               patch({
-                services: {
-                  ...server.services,
-                  dhcp: {
-                    ...server.services.dhcp,
-                    enabled: e.target.checked,
-                  },
+                interface: { ...server.interface, subnetMask: e.target.value },
+              })
+            }
+          />
+          <input
+            className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+            placeholder="Default gateway"
+            value={server.interface.defaultGateway ?? ""}
+            onChange={(e) =>
+              patch({
+                interface: {
+                  ...server.interface,
+                  defaultGateway: e.target.value,
                 },
               })
             }
           />
-          Enable DHCP
-        </label>
-        {server.services.dhcp.pools[0] && (
-          <div className="mt-2 space-y-1 text-xs">
+        </div>
+      </section>
+
+      <section>
+        <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          Services → DHCP
+        </h4>
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 space-y-2 shadow-2xs">
+          <label className="flex items-center gap-2 text-xs font-medium text-[var(--foreground)]">
             <input
-              className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1"
-              value={server.services.dhcp.pools[0].name}
-              onChange={(e) => {
-                const pools = [...server.services.dhcp.pools];
-                pools[0] = { ...pools[0], name: e.target.value };
+              type="checkbox"
+              className="rounded border-[var(--border)] accent-[var(--foreground)]"
+              checked={server.services.dhcp.enabled}
+              onChange={(e) =>
                 patch({
                   services: {
                     ...server.services,
-                    dhcp: { ...server.services.dhcp, pools },
+                    dhcp: {
+                      ...server.services.dhcp,
+                      enabled: e.target.checked,
+                    },
                   },
-                });
-              }}
+                })
+              }
             />
-            <input
-              placeholder="Start IP"
-              className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1"
-              value={server.services.dhcp.pools[0].startIp}
-              onChange={(e) => {
-                const pools = [...server.services.dhcp.pools];
-                pools[0] = { ...pools[0], startIp: e.target.value };
+            Enable DHCP Service
+          </label>
+          {server.services.dhcp.pools[0] && (
+            <div className="mt-2 space-y-1.5 text-xs">
+              <input
+                className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+                value={server.services.dhcp.pools[0].name}
+                onChange={(e) => {
+                  const pools = [...server.services.dhcp.pools];
+                  pools[0] = { ...pools[0], name: e.target.value };
+                  patch({
+                    services: {
+                      ...server.services,
+                      dhcp: { ...server.services.dhcp, pools },
+                    },
+                  });
+                }}
+              />
+              <input
+                placeholder="Start IP"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+                value={server.services.dhcp.pools[0].startIp}
+                onChange={(e) => {
+                  const pools = [...server.services.dhcp.pools];
+                  pools[0] = { ...pools[0], startIp: e.target.value };
+                  patch({
+                    services: {
+                      ...server.services,
+                      dhcp: { ...server.services.dhcp, pools },
+                    },
+                  });
+                }}
+              />
+              <input
+                placeholder="End IP"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+                value={server.services.dhcp.pools[0].endIp}
+                onChange={(e) => {
+                  const pools = [...server.services.dhcp.pools];
+                  pools[0] = { ...pools[0], endIp: e.target.value };
+                  patch({
+                    services: {
+                      ...server.services,
+                      dhcp: { ...server.services.dhcp, pools },
+                    },
+                  });
+                }}
+              />
+            </div>
+          )}
+          {!server.services.dhcp.pools.length && (
+            <button
+              type="button"
+              className="text-xs font-medium text-[var(--foreground)] underline hover:opacity-80"
+              onClick={() =>
                 patch({
                   services: {
                     ...server.services,
-                    dhcp: { ...server.services.dhcp, pools },
+                    dhcp: {
+                      enabled: true,
+                      pools: [
+                        {
+                          name: "Pool-Building-A",
+                          defaultGateway: "192.168.0.1",
+                          dnsServer: "192.168.0.11",
+                          startIp: "192.168.0.20",
+                          endIp: "192.168.0.100",
+                          subnetMask: "255.255.255.0",
+                        },
+                      ],
+                    },
                   },
-                });
-              }}
-            />
+                })
+              }
+            >
+              + Add Pool-Building-A
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          Services → DNS
+        </h4>
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 space-y-2 shadow-2xs">
+          <label className="flex items-center gap-2 text-xs font-medium text-[var(--foreground)]">
             <input
-              placeholder="End IP"
-              className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1"
-              value={server.services.dhcp.pools[0].endIp}
-              onChange={(e) => {
-                const pools = [...server.services.dhcp.pools];
-                pools[0] = { ...pools[0], endIp: e.target.value };
+              type="checkbox"
+              className="rounded border-[var(--border)] accent-[var(--foreground)]"
+              checked={server.services.dns.enabled}
+              onChange={(e) =>
                 patch({
                   services: {
                     ...server.services,
-                    dhcp: { ...server.services.dhcp, pools },
+                    dns: { ...server.services.dns, enabled: e.target.checked },
                   },
-                });
-              }}
+                })
+              }
             />
-          </div>
-        )}
-        {!server.services.dhcp.pools.length && (
+            Enable DNS Service
+          </label>
+          {server.services.dns.records.map((r, i) => (
+            <div key={i} className="flex gap-1.5 text-xs">
+              <input
+                className="flex-1 rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+                value={r.domainName}
+                onChange={(e) => {
+                  const records = [...server.services.dns.records];
+                  records[i] = { ...records[i], domainName: e.target.value };
+                  patch({
+                    services: {
+                      ...server.services,
+                      dns: { ...server.services.dns, records },
+                    },
+                  });
+                }}
+              />
+              <input
+                className="w-32 rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+                value={r.ipAddress}
+                onChange={(e) => {
+                  const records = [...server.services.dns.records];
+                  records[i] = { ...records[i], ipAddress: e.target.value };
+                  patch({
+                    services: {
+                      ...server.services,
+                      dns: { ...server.services.dns, records },
+                    },
+                  });
+                }}
+              />
+            </div>
+          ))}
           <button
             type="button"
-            className="mt-2 text-xs text-blue-400"
+            className="text-xs font-medium text-[var(--foreground)] underline hover:opacity-80"
             onClick={() =>
               patch({
                 services: {
                   ...server.services,
-                  dhcp: {
+                  dns: {
                     enabled: true,
-                    pools: [
+                    records: [
+                      ...server.services.dns.records,
                       {
-                        name: "Pool-Building-A",
-                        defaultGateway: "192.168.0.1",
-                        dnsServer: "192.168.0.11",
-                        startIp: "192.168.0.20",
-                        endIp: "192.168.0.100",
-                        subnetMask: "255.255.255.0",
+                        domainName: "campus.local",
+                        type: "A",
+                        ipAddress: "192.168.2.10",
                       },
                     ],
                   },
@@ -141,106 +230,36 @@ export function ServerInspector({ device }: { device: Device }) {
               })
             }
           >
-            Add Pool-Building-A
+            + Add DNS A-Record
           </button>
-        )}
+        </div>
       </section>
 
       <section>
-        <h4 className="font-semibold text-slate-300">Services → DNS</h4>
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={server.services.dns.enabled}
-            onChange={(e) =>
-              patch({
-                services: {
-                  ...server.services,
-                  dns: { ...server.services.dns, enabled: e.target.checked },
-                },
-              })
-            }
-          />
-          Enable DNS
-        </label>
-        {server.services.dns.records.map((r, i) => (
-          <div key={i} className="mt-2 flex gap-1 text-xs">
+        <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          Services → HTTP
+        </h4>
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 shadow-2xs">
+          <label className="flex items-center gap-2 text-xs font-medium text-[var(--foreground)]">
             <input
-              className="flex-1 rounded border border-slate-600 bg-slate-900 px-2 py-1"
-              value={r.domainName}
-              onChange={(e) => {
-                const records = [...server.services.dns.records];
-                records[i] = { ...records[i], domainName: e.target.value };
+              type="checkbox"
+              className="rounded border-[var(--border)] accent-[var(--foreground)]"
+              checked={server.services.http.enabled}
+              onChange={(e) =>
                 patch({
                   services: {
                     ...server.services,
-                    dns: { ...server.services.dns, records },
-                  },
-                });
-              }}
-            />
-            <input
-              className="w-28 rounded border border-slate-600 bg-slate-900 px-2 py-1"
-              value={r.ipAddress}
-              onChange={(e) => {
-                const records = [...server.services.dns.records];
-                records[i] = { ...records[i], ipAddress: e.target.value };
-                patch({
-                  services: {
-                    ...server.services,
-                    dns: { ...server.services.dns, records },
-                  },
-                });
-              }}
-            />
-          </div>
-        ))}
-        <button
-          type="button"
-          className="mt-2 text-xs text-blue-400"
-          onClick={() =>
-            patch({
-              services: {
-                ...server.services,
-                dns: {
-                  enabled: true,
-                  records: [
-                    ...server.services.dns.records,
-                    {
-                      domainName: "campus.local",
-                      type: "A",
-                      ipAddress: "192.168.2.10",
+                    http: {
+                      ...server.services.http,
+                      enabled: e.target.checked,
                     },
-                  ],
-                },
-              },
-            })
-          }
-        >
-          + DNS record
-        </button>
-      </section>
-
-      <section>
-        <h4 className="font-semibold text-slate-300">Services → HTTP</h4>
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={server.services.http.enabled}
-            onChange={(e) =>
-              patch({
-                services: {
-                  ...server.services,
-                  http: {
-                    ...server.services.http,
-                    enabled: e.target.checked,
                   },
-                },
-              })
-            }
-          />
-          Enable HTTP (port {server.services.http.port})
-        </label>
+                })
+              }
+            />
+            Enable HTTP (TCP Port {server.services.http.port})
+          </label>
+        </div>
       </section>
     </div>
   );

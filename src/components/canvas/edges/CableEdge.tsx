@@ -32,7 +32,7 @@ export function CableEdge(props: EdgeProps) {
   const up = link ? isLinkUp(topology, link) : false;
   const age = link?.createdAt ? Date.now() - link.createdAt : 99999;
   const settling = age < 2000;
-  const color = !up ? "#ef4444" : settling ? "#f59e0b" : "#22c55e";
+  const color = !up ? "#dc2626" : settling ? "#78716c" : "#1a1a18";
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -50,7 +50,8 @@ export function CableEdge(props: EdgeProps) {
         path={edgePath}
         style={{
           stroke: color,
-          strokeWidth: selected ? 3 : 2,
+          strokeWidth: selected ? 2.5 : 1.5,
+          opacity: settling ? 0.6 : 0.85,
         }}
       />
       <EdgeLabelRenderer>
@@ -58,7 +59,7 @@ export function CableEdge(props: EdgeProps) {
           style={{
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
           }}
-          className="pointer-events-none rounded bg-slate-900/90 px-1 text-[10px] text-slate-300"
+          className="pointer-events-none rounded border border-[var(--border)] bg-[var(--panel)]/95 px-1.5 py-0.5 text-[10px] font-mono text-[var(--foreground)] shadow-xs"
         >
           {d?.fromPort} ↔ {d?.toPort}
         </div>

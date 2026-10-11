@@ -36,22 +36,22 @@ export function PortPickerDialog() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-sm rounded-lg border border-slate-600 bg-slate-900 p-4 shadow-xl">
-        <h3 className="font-medium">
-          Select port on {device.name}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-2xs p-4">
+      <div className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--panel)] p-5 shadow-xl">
+        <h3 className="font-semibold text-sm text-[var(--foreground)]">
+          Select Port on {device.name}
         </h3>
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-[var(--muted)]">
           {cablePending
-            ? "Pick the second port to complete the cable."
-            : "Pick the first port for the copper cable."}
+            ? "Pick the second port to complete the connection."
+            : "Pick the source port for the copper straight cable."}
         </p>
-        <ul className="mt-3 max-h-64 space-y-1 overflow-auto">
+        <ul className="mt-3.5 max-h-64 space-y-1.5 overflow-auto">
           {ports.map((p) => (
             <li key={p.id}>
               <button
                 type="button"
-                className="w-full rounded border border-slate-700 px-2 py-2 text-left text-sm hover:border-blue-500"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--subtle)] px-3 py-2 text-left text-xs font-mono font-medium text-[var(--foreground)] hover:border-[var(--foreground)] hover:bg-white transition shadow-2xs"
                 onClick={() => pick(p.id)}
               >
                 {p.label}
@@ -59,16 +59,18 @@ export function PortPickerDialog() {
             </li>
           ))}
           {ports.length === 0 && (
-            <li className="text-sm text-slate-500">No free ports</li>
+            <li className="text-xs text-[var(--muted)] p-2">No free ports available on this device.</li>
           )}
         </ul>
-        <button
-          type="button"
-          className="mt-3 text-sm text-slate-400 hover:text-white"
-          onClick={() => setPortPickerDeviceId(null)}
-        >
-          Cancel
-        </button>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-xs text-[var(--foreground)] hover:bg-[var(--subtle)] transition shadow-2xs"
+            onClick={() => setPortPickerDeviceId(null)}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ export function nslookup(
   topology: Topology,
   pcDeviceId: string,
   hostname: string,
-): { lines: string[]; address?: string } {
+): { lines: string[]; address?: string; trace?: import("./types").ForwardResult } {
   const pc = getDevice(topology, pcDeviceId);
   const lines: string[] = [];
   if (!pc?.pc) {
@@ -60,10 +60,10 @@ export function nslookup(
     lines.push(`Name:    ${hostname}`);
     lines.push(`Address: ${addr}`);
     lines.push("(Host unreachable for resolved address)");
-    return { lines, address: addr };
+    return { lines, address: addr, trace: reach };
   }
 
   lines.push(`Name:    ${hostname}`);
   lines.push(`Address: ${addr}`);
-  return { lines, address: addr };
+  return { lines, address: addr, trace: reach };
 }
