@@ -21,6 +21,10 @@ export interface SimEvent {
   atDevice: string;
   type: string;
   color: string;
+  info?: string;
+  packetIdx?: number;
+  inPort?: string;
+  outPort?: string;
 }
 
 interface TopologyState {
@@ -51,6 +55,7 @@ interface TopologyState {
   addLink: (from: PortRef, to: PortRef) => string | null;
   removeLink: (id: string) => void;
   setTopology: (t: Topology) => void;
+  setSimEvents: (events: SimEvent[]) => void;
   pushSimEvents: (events: SimEvent[]) => void;
   clearSimEvents: () => void;
   setLastValidation: (v: import("@/engine/types").ValidationResult | null) => void;
@@ -187,6 +192,8 @@ export const useTopologyStore = create<TopologyState>()(
         })),
 
       setTopology: (t) => set({ topology: t }),
+
+      setSimEvents: (events) => set({ simEvents: events }),
 
       pushSimEvents: (events) =>
         set((s) => ({ simEvents: [...s.simEvents, ...events] })),

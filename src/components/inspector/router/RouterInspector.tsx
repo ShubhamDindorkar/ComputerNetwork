@@ -25,30 +25,33 @@ export function RouterInspector({ device }: { device: Device }) {
   return (
     <div className="space-y-4">
       <section>
-        <h4 className="mb-2 font-semibold text-slate-300">Interfaces</h4>
+        <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          Interfaces
+        </h4>
         {ports.map((p) => {
           const cfg = router.interfaces[p.id] ?? { status: "on" as const };
           return (
-            <div key={p.id} className="mb-3 rounded border border-slate-700 p-2">
-              <div className="text-xs font-medium">{p.label}</div>
-              <label className="mt-1 flex items-center gap-2 text-xs">
+            <div key={p.id} className="mb-3 rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 space-y-1.5 shadow-2xs">
+              <div className="text-xs font-semibold text-[var(--foreground)]">{p.label}</div>
+              <label className="flex items-center gap-2 text-xs text-[var(--foreground)]">
                 <input
                   type="checkbox"
+                  className="rounded border-[var(--border)] accent-[var(--foreground)]"
                   checked={cfg.status !== "off"}
                   onChange={(e) =>
                     patchIface(p.id, { status: e.target.checked ? "on" : "off" })
                   }
                 />
-                Port on
+                Port enabled
               </label>
               <input
-                className="mt-1 w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs"
-                placeholder="IP"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
+                placeholder="IP address"
                 value={cfg.ip ?? ""}
                 onChange={(e) => patchIface(p.id, { ip: e.target.value })}
               />
               <input
-                className="mt-1 w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs font-mono"
                 placeholder="Subnet mask"
                 value={cfg.subnetMask ?? ""}
                 onChange={(e) => patchIface(p.id, { subnetMask: e.target.value })}
@@ -59,45 +62,52 @@ export function RouterInspector({ device }: { device: Device }) {
       </section>
 
       <section>
-        <h4 className="mb-2 font-semibold text-slate-300">Routing → OSPF</h4>
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={router.ospf.enabled}
-            onChange={(e) =>
+        <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          Routing → OSPF
+        </h4>
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 space-y-2 shadow-2xs">
+          <label className="flex items-center gap-2 text-xs font-medium text-[var(--foreground)]">
+            <input
+              type="checkbox"
+              className="rounded border-[var(--border)] accent-[var(--foreground)]"
+              checked={router.ospf.enabled}
+              onChange={(e) =>
+                patchRouter({
+                  ospf: { ...router.ospf, enabled: e.target.checked },
+                })
+              }
+            />
+            Enable OSPF (process {router.ospf.processId})
+          </label>
+          <div className="space-y-1">
+            {router.ospf.networks.map((n, i) => (
+              <div key={i} className="text-xs font-mono text-[var(--foreground)]">
+                {n.networkAddress} {n.wildcardMask} area {n.areaId}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="text-xs font-medium text-[var(--foreground)] underline hover:opacity-80"
+            onClick={() =>
               patchRouter({
-                ospf: { ...router.ospf, enabled: e.target.checked },
+                ospf: {
+                  ...router.ospf,
+                  networks: [
+                    ...router.ospf.networks,
+                    {
+                      networkAddress: "192.168.0.0",
+                      wildcardMask: "0.0.0.255",
+                      areaId: 0,
+                    },
+                  ],
+                },
               })
             }
-          />
-          Enable OSPF (process {router.ospf.processId})
-        </label>
-        {router.ospf.networks.map((n, i) => (
-          <div key={i} className="mt-2 text-xs text-slate-400">
-            {n.networkAddress} {n.wildcardMask} area {n.areaId}
-          </div>
-        ))}
-        <button
-          type="button"
-          className="mt-2 text-xs text-blue-400"
-          onClick={() =>
-            patchRouter({
-              ospf: {
-                ...router.ospf,
-                networks: [
-                  ...router.ospf.networks,
-                  {
-                    networkAddress: "192.168.0.0",
-                    wildcardMask: "0.0.0.255",
-                    areaId: 0,
-                  },
-                ],
-              },
-            })
-          }
-        >
-          + Add network
-        </button>
+          >
+            + Add network
+          </button>
+        </div>
       </section>
 
       <QosSection device={device} />
@@ -166,30 +176,34 @@ function QosSection({ device }: { device: Device }) {
 
   return (
     <section>
-      <h4 className="mb-2 font-semibold text-slate-300">QoS</h4>
-      <button
-        type="button"
-        className="mb-2 rounded bg-slate-800 px-2 py-1 text-xs"
-        onClick={applyCampusPreset}
-      >
-        Apply Campus-QoS-Policy preset
-      </button>
-      <ul className="space-y-1 text-xs text-slate-400">
-        {qos.classMaps.map((c) => (
-          <li key={c.name}>Class: {c.name}</li>
-        ))}
-        {qos.policyMaps.map((p) => (
-          <li key={p.name}>
-            Policy: {p.name} (
-            {p.classes.map((c) => `${c.bandwidthPercent}%`).join(", ")})
-          </li>
-        ))}
-        {qos.servicePolicies.map((sp, i) => (
-          <li key={i}>
-            {sp.interfacePortId} {sp.direction}: {sp.policyMapName}
-          </li>
-        ))}
-      </ul>
+      <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+        QoS Policy
+      </h4>
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3 space-y-2.5 shadow-2xs">
+        <button
+          type="button"
+          className="rounded-lg border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] px-3 py-1.5 text-xs font-medium hover:opacity-90 transition shadow-2xs"
+          onClick={applyCampusPreset}
+        >
+          Apply Campus-QoS-Policy preset
+        </button>
+        <ul className="space-y-1 text-xs font-mono text-[var(--foreground)]">
+          {qos.classMaps.map((c) => (
+            <li key={c.name}>Class: {c.name}</li>
+          ))}
+          {qos.policyMaps.map((p) => (
+            <li key={p.name}>
+              Policy: {p.name} (
+              {p.classes.map((c) => `${c.bandwidthPercent}%`).join(", ")})
+            </li>
+          ))}
+          {qos.servicePolicies.map((sp, i) => (
+            <li key={i}>
+              {sp.interfacePortId} {sp.direction}: {sp.policyMapName}
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

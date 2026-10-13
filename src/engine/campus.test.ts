@@ -68,4 +68,38 @@ describe("campus QoS preset", () => {
     const dhcpFirst = cmp.withQos.find((p) => p.className === "DHCP-DNS");
     expect(dhcpFirst).toBeDefined();
   });
+
+  it("ping gateway produces successful trace", () => {
+    let top = campusQoSPreset();
+    top = assignDhcp(top, "dev-pca1").topology;
+    const r = runSimulateAction(top, {
+      type: "cli",
+      deviceId: "dev-pca1",
+      command: "ping 192.168.0.1",
+    });
+    expect(r.output).toContain("Reply from 192.168.0.1");
+    expect(r.traces?.length).toBeGreaterThan(0);
+    expect(r.traces?.[0].forwardTrace.length).toBeGreaterThan(0);
+  });
+
+  it("ping remote PC and DMZ server produces multi-hop traces", () => {
+    let top = campusQoSPreset();
+    top = assignDhcp(top, "dev-pca1").topology;
+    const rRemote = runSimulateAction(top, {
+      type: "cli",
+      deviceId: "dev-pca1",
+      command: "ping 192.168.1.20",
+    });
+    expect(rRemote.output).toContain("Reply from 192.168.1.20");
+    expect(rRemote.traces?.[0].forwardTrace.length).toBe(5);
+
+    const rDmz = runSimulateAction(top, {
+      type: "cli",
+      deviceId: "dev-pca1",
+      command: "ping 192.168.2.10",
+    });
+    expect(rDmz.output).toContain("Reply from 192.168.2.10");
+    expect(rDmz.traces?.[0].forwardTrace.length).toBe(4);
+  });
 });
+

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTopologyStore } from "@/store/topologyStore";
+import { useTopologyStore, type SimEvent } from "@/store/topologyStore";
+import { simulate } from "@/lib/apiClient";
 import { RouterInspector } from "./router/RouterInspector";
 import { ServerInspector } from "./server/ServerInspector";
 import { PcInspector } from "./pc/PcInspector";
@@ -17,8 +18,8 @@ export function InspectorPanel() {
 
   if (!device) {
     return (
-      <aside className="w-80 border-l border-slate-700 bg-[var(--panel)] p-4 text-sm text-slate-400">
-        Double-click a device to open the inspector (Config / Desktop / CLI).
+      <aside className="w-80 border-l border-[var(--border)] bg-[var(--panel)] p-5 text-sm text-[var(--muted)]">
+        Double-click a device on the canvas to open the inspector (Config / Desktop / CLI).
       </aside>
     );
   }
@@ -33,21 +34,23 @@ export function InspectorPanel() {
   const activeTab = tabs.includes(tab) ? tab : tabs[0];
 
   return (
-    <aside className="flex w-96 flex-col border-l border-slate-700 bg-[var(--panel)] text-sm">
-      <div className="border-b border-slate-700 p-3">
+    <aside className="flex w-96 flex-col border-l border-[var(--border)] bg-[var(--panel)] text-sm">
+      <div className="border-b border-[var(--border)] p-3.5 space-y-2">
         <input
-          className="w-full rounded border border-slate-600 bg-slate-900 px-2 py-1 font-medium"
+          className="w-full rounded-lg border border-[var(--border)] bg-white px-2.5 py-1.5 font-medium text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-none shadow-2xs"
           value={device.name}
           onChange={(e) => updateDevice(device.id, { name: e.target.value })}
         />
-        <p className="mt-1 text-xs text-slate-400">{device.model}</p>
-        <div className="mt-2 flex gap-1">
+        <p className="text-xs text-[var(--muted)] font-mono">{device.model}</p>
+        <div className="flex gap-1.5 pt-1">
           {tabs.map((t) => (
             <button
               key={t}
               type="button"
-              className={`rounded px-2 py-1 text-xs capitalize ${
-                activeTab === t ? "bg-blue-600" : "bg-slate-800"
+              className={`rounded-lg px-3 py-1 text-xs capitalize transition shadow-2xs ${
+                activeTab === t
+                  ? "border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] font-medium"
+                  : "border border-[var(--border)] bg-[var(--subtle)] text-[var(--foreground)] hover:bg-white"
               }`}
               onClick={() => setTab(t)}
             >
@@ -56,7 +59,7 @@ export function InspectorPanel() {
           ))}
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto p-3">
+      <div className="min-h-0 flex-1 overflow-auto p-3.5">
         {device.kind === "router" && activeTab === "config" && (
           <RouterInspector device={device} />
         )}
@@ -85,16 +88,15 @@ function CliTerminal({
 }) {
   const topology = useTopologyStore((s) => s.topology);
   const setTopology = useTopologyStore((s) => s.setTopology);
-  const mode = useTopologyStore((s) => s.mode);
-  const pushSimEvents = useTopologyStore((s) => s.pushSimEvents);
-  const clearSimEvents = useTopologyStore((s) => s.clearSimEvents);
+  const setSimEvents = useTopologyStore((s) => s.setSimEvents);
+  const setBottomTab = useTopologyStore((s) => s.setBottomTab);
+  const setMode = useTopologyStore((s) => s.setMode);
   const [history, setHistory] = useState<string[]>(["C:\\>"]);
   const [input, setInput] = useState("");
 
   const run = async () => {
     const cmd = input.trim();
     if (!cmd) return;
-    const { simulate } = await import("@/lib/apiClient");
     const action = router
       ? { type: "router-cli" as const, deviceId, command: cmd }
       : { type: "cli" as const, deviceId, command: cmd };
@@ -108,39 +110,68 @@ function CliTerminal({
       router ? "Router>" : "C:\\>",
     ]);
     setInput("");
-    if (mode === "simulation" && res.traces?.length) {
-      clearSimEvents();
-      const traces = res.traces as { forwardTrace?: { deviceName: string; action: string }[] }[];
-      let t = 0;
-      for (const tr of traces) {
-        for (const hop of tr.forwardTrace ?? []) {
-          t += 200;
-          pushSimEvents([
-            {
-              id: crypto.randomUUID(),
-              timeMs: t,
-              lastDevice: hop.deviceName,
-              atDevice: hop.deviceName,
-              type: cmd.startsWith("ping") ? "ICMP" : "Packet",
-              color: "#60a5fa",
-            },
-          ]);
-        }
+
+    if (res.traces && res.traces.length > 0) {
+      const traces = res.traces as {
+        success?: boolean;
+        forwardTrace?: {
+          deviceId: string;
+          deviceName: string;
+          action: string;
+          inPort?: string;
+          outPort?: string;
+        }[];
+      }[];
+
+      const batchEvents: SimEvent[] = [];
+      let baseTime = 0;
+
+      traces.forEach((tr, pIdx) => {
+        const hops = tr.forwardTrace ?? [];
+        hops.forEach((hop, hIdx) => {
+          baseTime += 120;
+          const prevHop = hIdx > 0 ? hops[hIdx - 1] : undefined;
+          batchEvents.push({
+            id: crypto.randomUUID(),
+            timeMs: baseTime,
+            lastDevice: prevHop ? prevHop.deviceName : "— (Source)",
+            atDevice: hop.deviceName,
+            type: cmd.toLowerCase().startsWith("ping")
+              ? `ICMP Echo #${pIdx + 1}`
+              : cmd.toLowerCase().startsWith("tracert")
+                ? `ICMP Hop #${hIdx + 1}`
+                : "Packet",
+            color: "#1a1a18",
+            info: hop.action,
+            packetIdx: pIdx + 1,
+            inPort: hop.inPort,
+            outPort: hop.outPort,
+          });
+        });
+      });
+
+      if (batchEvents.length > 0) {
+        setSimEvents(batchEvents);
+        setBottomTab("simulation");
+        setMode("simulation");
       }
     }
   };
 
   return (
-    <div className="flex h-64 flex-col rounded border border-slate-700 bg-black font-mono text-xs">
-      <pre className="flex-1 overflow-auto p-2 text-green-400">
+    <div className="flex h-72 flex-col rounded-lg border border-[var(--border)] bg-[#171717] font-mono text-xs overflow-hidden shadow-xs">
+      <pre className="flex-1 overflow-auto p-3 text-[#f5f5f4] leading-relaxed select-text">
         {history.join("\n")}
       </pre>
-      <input
-        className="border-t border-slate-700 bg-slate-900 p-2 text-green-400 outline-none"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && void run()}
-      />
+      <div className="flex border-t border-[#333333] bg-[#222222]">
+        <input
+          className="flex-1 bg-transparent p-2.5 text-[#f5f5f4] placeholder-[#888888] outline-none font-mono"
+          placeholder="Type command (e.g. ping 192.168.1.20)..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && void run()}
+        />
+      </div>
     </div>
   );
 }

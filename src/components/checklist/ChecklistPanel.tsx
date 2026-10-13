@@ -17,61 +17,80 @@ export function ChecklistPanel() {
   const v = lastValidation;
 
   return (
-    <div className="text-xs">
-      <button
-        type="button"
-        className="mb-2 rounded bg-emerald-700 px-3 py-1"
-        onClick={() => void run()}
-      >
-        Run all tests (Parts 3–8)
-      </button>
+    <div className="text-xs space-y-3">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="rounded-lg border border-[var(--foreground)] bg-[var(--foreground)] text-[var(--background)] px-3 py-1.5 text-xs font-medium hover:opacity-90 transition shadow-2xs"
+          onClick={() => void run()}
+        >
+          Run Lab Validation (Parts 3–8)
+        </button>
+        {v && (
+          <span className="text-xs font-semibold text-[var(--foreground)]">
+            {v.allPass ? "✓ All checklist items and functional tests passed" : "⚠ Configuration issues detected"}
+          </span>
+        )}
+      </div>
+
       {!v && (
-        <p className="text-slate-500">
-          Click Validate or Run all tests to check your topology against the lab
-          guide.
+        <p className="text-xs text-[var(--muted)]">
+          Click &ldquo;Run Lab Validation&rdquo; to test your topology configurations (DHCP, DNS, OSPF, and QoS queues) against lab specifications.
         </p>
       )}
+
       {v && (
         <>
-          <p
-            className={`mb-2 font-medium ${v.allPass ? "text-green-400" : "text-amber-400"}`}
-          >
-            {v.allPass ? "All checklist items and tests passed." : "Some items need attention."}
-          </p>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h4 className="mb-1 font-semibold">Checklist</h4>
-              <ul className="max-h-32 space-y-0.5 overflow-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3">
+              <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                Specification Checklist
+              </h4>
+              <ul className="max-h-36 space-y-1.5 overflow-auto pr-1">
                 {v.checklist.map((c) => (
                   <li
                     key={c.id}
-                    className={c.pass ? "text-green-500" : "text-red-400"}
+                    className={`font-mono text-xs flex items-start gap-1.5 ${
+                      c.pass ? "text-[var(--foreground)]" : "text-red-700 font-medium"
+                    }`}
                   >
-                    [{c.part}] {c.title}
-                    {!c.pass && c.hint && (
-                      <span className="block text-slate-500">{c.hint}</span>
-                    )}
+                    <span className="shrink-0">{c.pass ? "✓" : "✗"}</span>
+                    <div>
+                      <span>[{c.part}] {c.title}</span>
+                      {!c.pass && c.hint && (
+                        <span className="block text-[11px] text-[var(--muted)] mt-0.5">{c.hint}</span>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
             </div>
-            <div>
-              <h4 className="mb-1 font-semibold">Functional tests</h4>
-              <ul className="max-h-32 space-y-0.5 overflow-auto">
+
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--subtle)] p-3">
+              <h4 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                Functional Verification Tests
+              </h4>
+              <ul className="max-h-36 space-y-1.5 overflow-auto pr-1">
                 {v.tests.map((t) => (
                   <li
                     key={t.id}
-                    className={t.pass ? "text-green-500" : "text-red-400"}
+                    className={`font-mono text-xs flex items-center justify-between ${
+                      t.pass ? "text-[var(--foreground)]" : "text-red-700 font-medium"
+                    }`}
                   >
-                    {t.name} — {t.pass ? "PASS" : "FAIL"}
+                    <span>{t.name}</span>
+                    <span className="rounded border border-[var(--border)] bg-white px-1.5 py-0.5 text-[10px] font-semibold">
+                      {t.pass ? "PASS" : "FAIL"}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
+
           <button
             type="button"
-            className="mt-2 text-blue-400"
+            className="text-xs font-medium text-[var(--foreground)] underline hover:opacity-80"
             onClick={() => {
               const fail = v.checklist.find((c) => !c.pass);
               if (!fail) return;

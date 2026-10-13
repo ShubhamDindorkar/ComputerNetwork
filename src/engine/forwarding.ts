@@ -135,6 +135,7 @@ export function forwardIcmp(
       const ports = getPortsForDevice(current);
       let forwarded = false;
 
+      // 1. Direct host or router interface match on this switch
       for (const p of ports) {
         const ref = { deviceId: current.id, portId: p.id };
         const link = findLinkOnPort(topology, ref);
@@ -142,31 +143,25 @@ export function forwardIcmp(
         const neighbor = otherEnd(link, ref);
         const nDev = getDevice(topology, neighbor.deviceId);
         if (!nDev || nDev.kind === "switch") continue;
+
         const nIp = findHostIp(nDev);
         if (nIp && nIp === destIp) {
           trace.push(
-            hop(current.id, current.name, "Switch forward to host", currentInPort, p.id),
+            hop(current.id, current.name, `Switch forward to host (${p.id})`, currentInPort, p.id),
           );
           current = nDev;
           currentInPort = neighbor.portId;
           forwarded = true;
           break;
         }
-      }
 
-      if (!forwarded) {
-        for (const p of ports) {
-          const ref = { deviceId: current.id, portId: p.id };
-          const link = findLinkOnPort(topology, ref);
-          if (!link || !isLinkUp(topology, link)) continue;
-          const neighbor = otherEnd(link, ref);
-          const nDev = getDevice(topology, neighbor.deviceId);
-          if (!nDev || nDev.kind === "switch") continue;
-          const nIp = findHostIp(nDev);
-          const nMask = findHostMask(nDev);
-          if (nIp && nMask && sameSubnet(nIp, destIp, nMask)) {
+        if (nDev.kind === "router" && nDev.router) {
+          const directMatch = Object.values(nDev.router.interfaces).some(
+            (c) => c.status !== "off" && c.ip === destIp,
+          );
+          if (directMatch) {
             trace.push(
-              hop(current.id, current.name, "Switch forward on subnet", currentInPort, p.id),
+              hop(current.id, current.name, `Switch forward to router (${p.id})`, currentInPort, p.id),
             );
             current = nDev;
             currentInPort = neighbor.portId;
@@ -176,6 +171,31 @@ export function forwardIcmp(
         }
       }
 
+      // 2. Check if destIp is reachable through an interconnected switch
+      if (!forwarded) {
+        for (const p of ports) {
+          const ref = { deviceId: current.id, portId: p.id };
+          const link = findLinkOnPort(topology, ref);
+          if (!link || !isLinkUp(topology, link)) continue;
+          const neighbor = otherEnd(link, ref);
+          const nDev = getDevice(topology, neighbor.deviceId);
+          if (nDev?.kind === "switch") {
+            const domain = broadcastDomain(topology, neighbor);
+            const devInDomain = findDeviceByIpInDomain(topology, domain, destIp);
+            if (devInDomain) {
+              trace.push(
+                hop(current.id, current.name, `Switch forward to switch (${p.id})`, currentInPort, p.id),
+              );
+              current = nDev;
+              currentInPort = neighbor.portId;
+              forwarded = true;
+              break;
+            }
+          }
+        }
+      }
+
+      // 3. Fallback: Destination is off-subnet or routed — forward to connected router
       if (!forwarded) {
         for (const p of ports) {
           const ref = { deviceId: current.id, portId: p.id };
@@ -185,7 +205,7 @@ export function forwardIcmp(
           const nDev = getDevice(topology, neighbor.deviceId);
           if (nDev?.kind === "router") {
             trace.push(
-              hop(current.id, current.name, "Switch forward to router", currentInPort, p.id),
+              hop(current.id, current.name, `Switch forward to gateway (${p.id})`, currentInPort, p.id),
             );
             current = nDev;
             currentInPort = neighbor.portId;
@@ -194,6 +214,7 @@ export function forwardIcmp(
           }
         }
       }
+
       if (!forwarded) {
         return {
           success: false,
@@ -206,6 +227,27 @@ export function forwardIcmp(
 
     if (current.kind === "router" && current.router) {
       routerHops++;
+
+      // Check if destIp is one of this router's own interface IPs
+      for (const [ifName, ifCfg] of Object.entries(current.router.interfaces)) {
+        if (ifCfg.status !== "off" && ifCfg.ip === destIp) {
+          trace.push(
+            hop(
+              current.id,
+              current.name,
+              `Delivered to router (${ifName}: ${destIp})`,
+              currentInPort,
+            ),
+          );
+          return {
+            success: true,
+            forwardTrace: trace,
+            rttMs: 1 + routerHops,
+            ttl: 255 - routerHops,
+          };
+        }
+      }
+
       const routes = buildRoutingTable(current);
       const route = longestPrefixMatch(routes, destIp);
       if (!route) {
@@ -226,7 +268,7 @@ export function forwardIcmp(
           forwardTrace: trace,
         };
       }
-      if (cfg.ip === destIp || sameSubnet(cfg.ip, destIp, cfg.subnetMask!)) {
+      if (sameSubnet(cfg.ip, destIp, cfg.subnetMask!)) {
         const link = findLinkOnPort(topology, {
           deviceId: current.id,
           portId: outIf,

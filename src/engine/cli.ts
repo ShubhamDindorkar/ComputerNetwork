@@ -24,14 +24,28 @@ export function runSimulateAction(
     }
     case "nslookup": {
       const top = ensurePcNetwork(topology, action.deviceId);
-      const { lines } = nslookup(top, action.deviceId, action.hostname);
-      return { output: lines.join("\r\n"), topology: top };
+      const res = nslookup(top, action.deviceId, action.hostname);
+      return {
+        output: res.lines.join("\r\n"),
+        topology: top,
+        traces: res.trace ? [res.trace] : [],
+      };
     }
     case "http": {
       const top = ensurePcNetwork(topology, action.deviceId);
       const res = httpGet(top, action.deviceId, action.url);
-      if (!res.ok) return { output: res.error ?? "Error", topology: top };
-      return { output: res.html ?? "", topology: top };
+      if (!res.ok) {
+        return {
+          output: res.error ?? "Error",
+          topology: top,
+          traces: res.trace ? [res.trace] : [],
+        };
+      }
+      return {
+        output: res.html ?? "",
+        topology: top,
+        traces: res.trace ? [res.trace] : [],
+      };
     }
     case "cli":
       return runPcCli(topology, action.deviceId, action.command);
@@ -116,8 +130,8 @@ function runPcCli(topology: Topology, deviceId: string, command: string): CliRes
   if (lower.startsWith("nslookup ")) {
     const host = trimmed.slice(9).trim();
     top = ensurePcNetwork(top, deviceId);
-    const { lines } = nslookup(top, deviceId, host);
-    return { output: lines.join("\r\n"), topology: top };
+    const res = nslookup(top, deviceId, host);
+    return { output: res.lines.join("\r\n"), topology: top, traces: res.trace ? [res.trace] : [] };
   }
 
   if (lower.startsWith("tracert ")) {
